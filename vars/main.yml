@@ -1,0 +1,6 @@
+---
+brother_install_tool_bin: "linux-brprinter-installer-{{brother_install_tool_version}}"
+brother_install_tool_archive: "{{brother_install_tool_bin}}.gz"
+brother_install_tool_url: "http://download.brother.com/welcome/dlf006893/{{brother_install_tool_archive}}"
+brother_install_dir: "/opt/brother"
+brother_bin_dir: "/usr/local/sbin"

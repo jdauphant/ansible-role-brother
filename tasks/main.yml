@@ -1,0 +1,28 @@
+---
+- name: ensure tmp dir exist
+  file: path={{brother_install_dir}} state=directory
+  tags: ["packages","brother"]
+
+- name: download brother install tool
+  get_url: url={{brother_install_tool_url}} dest={{brother_install_dir}}
+  tags: ["packages","brother"]
+
+- name: extract brother install tool
+  command: gunzip {{brother_install_dir}}/{{brother_install_tool_archive}} creates={{brother_install_dir}}/{{brother_install_tool_bin}} 
+  tags: ["packages","brother"]
+
+- name: ensure brother install is executable
+  file: path={{brother_install_dir}}/{{brother_install_tool_bin}} mode=755
+  tags: ["packages","brother"]
+
+- name: create symlink
+  file: state=link src={{brother_install_dir}}/{{brother_install_tool_bin}} path={{brother_bin_dir}}/linux-brprinter-installer
+  tags: ["packages","brother"]
+
+- name: configure printers
+  shell: yes | {{brother_install_dir}}/linux-brprinter-installer chdir=/tmp
+  register: install_result
+  with_items: brother_printers_to_install
+  changed_when: "'Invalid IP address or NODENAME' in install_result.stderr"
+  failed_when: "'Invalid IP address or NODENAME' not in install_result.stderr"
+  tags: ["packages","brother"]
