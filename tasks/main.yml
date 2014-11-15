@@ -1,4 +1,9 @@
 ---
+- name: ensure needed dependancy are installed
+  apt: name=cups
+  when: ansible_os_family == "Debian"
+  tags: ["packages","brother"]
+  
 - name: ensure tmp dir exist
   file: path={{brother_install_dir}} state=directory
   tags: ["packages","brother"]
