@@ -30,4 +30,5 @@
   with_items: brother_printers_to_install
   changed_when: "'Invalid IP address' in install_result.stderr"
   failed_when: "'Invalid IP address' not in install_result.stderr"
+  ignore_errors: True
   tags: ["packages","brother"]
