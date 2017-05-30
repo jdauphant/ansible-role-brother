@@ -27,7 +27,7 @@
 - name: install and configure printers
   shell: yes |{{brother_bin_dir}}/linux-brprinter-installer {{item}} chdir=/tmp
   register: install_result
-  with_items: brother_printers_to_install
+  with_items: "{{brother_printers_to_install}}"
   changed_when: "'Invalid IP address' in install_result.stderr"
   failed_when: "'Invalid IP address' not in install_result.stderr"
   ignore_errors: True
