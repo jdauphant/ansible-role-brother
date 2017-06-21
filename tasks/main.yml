@@ -1,6 +1,10 @@
 ---
-- name: ensure needed dependancy are installed
-  apt: name=cups
+- name: ensure needed dependencies are installed
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - cups
+    - expect
   when: ansible_os_family == "Debian"
   tags: ["packages","brother"]
 
@@ -25,10 +29,63 @@
   tags: ["packages","brother"]
 
 - name: install and configure printers
-  shell: yes |{{brother_bin_dir}}/linux-brprinter-installer {{item}} chdir=/tmp
-  register: install_result
+  shell: |
+    # Exit without changes if the printer is already installed
+    set timeout 2
+    spawn /usr/bin/lpstat -a
+    expect {
+        "{{item}}" { exit 4 }
+        timeout {}
+    }
+
+    # Set larger timeout to wait for updates and cupsd restart
+    set timeout 180
+
+    # Run Brother script for printer
+    spawn {{brother_bin_dir}}/linux-brprinter-installer {{item}}
+
+    expect {
+        # Prompt 1: OK? [y/N]
+        "OK?" {
+            send "y\r"
+            exp_continue
+        }
+        # Prompt 2: Do you agree? [Y/n]
+        # This prompt does not appear if you already agreed
+        # Also, it can appear multiple times, depending on the needed packages
+        # to download
+        "Do you agree" {
+            send "y\r"
+            exp_continue
+        }
+        # Prompt 3: Will you specify the Device URI? [Y/n]
+        "specify the Device URI" {
+            send "y\r"
+            exp_continue
+        }
+        # Prompt 4: select the number of destination Device URI.
+        # "A" is the Auto option
+        "number of destination Device URI" {
+            send "A\r"
+            exp_continue
+        }
+        # Prompt 5: Test Print? [y/N]
+        "Test Print" {
+            send "n\r"
+            exp_continue
+        }
+        "Hit Enter" {
+            send "\r"
+            exp_continue
+        }
+        # Script finished
+        eof {}
+    }
+  args:
+    executable: /usr/bin/expect
+    chdir: /tmp
   with_items: "{{brother_printers_to_install}}"
-  changed_when: "'Invalid IP address' in install_result.stderr"
-  failed_when: "'Invalid IP address' not in install_result.stderr"
-  ignore_errors: True
+  register: response
+  changed_when: response.rc == 0
+  failed_when: response.rc != 0 and response.rc != 4
   tags: ["packages","brother"]
