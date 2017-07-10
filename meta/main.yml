@@ -98,6 +98,6 @@ galaxy_info:
   #- monitoring
   #- networking
   #- packaging
-  #- system
+   - system
   #- web
 dependencies: []
